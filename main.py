@@ -3,6 +3,7 @@ import numpy as np
 import glob
 import os
 import sys
+import time
 
 '''
 ====================
@@ -39,6 +40,10 @@ BETA = 0.4
 #Кадры, которые нужно сохранить как скриншоты
 SCREENSHOT_FRAMES = [10, 20, 28, 38, 48]
 
+#Печатать время работы
+LOG_TIME = True
+
+
 
 FARNEBACK_PARAMS = {
     'pyr_scale': 0.5,    # масштаб пирамиды (<1)
@@ -66,6 +71,15 @@ out_video = cv2.VideoWriter(OUTPUT_VIDEO_FILE, fourcc, FPS, (width, height))
 if SAVE_RAW_FLOW:
     os.makedirs(RAW_FLOW_DIR, exist_ok=True)
 
+sum_time = 0
+if LOG_TIME:
+    print(FRAME_DIR)
+    print('='*20)
+    print("h: ", height)
+    print("w: ", width)
+    print("length: ", len(frame_paths))
+    print('='*20)
+
 '''
 =============
 Рабочий Цикл
@@ -76,6 +90,7 @@ prev_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
 
 
 for i in range(1, len(frame_paths)):
+    start_time = time.perf_counter()#Начало замеров времени
     current_frame = cv2.imread(frame_paths[i])
     current_gray = cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY)
     flow = cv2.calcOpticalFlowFarneback(prev_gray,
@@ -131,6 +146,10 @@ for i in range(1, len(frame_paths)):
     out_video.write(overlay)
     prev_gray = current_gray
 
+    end_time = time.perf_counter() #Конец замеров времени
+    work_time = (end_time - start_time) * 1000
+    sum_time += work_time
+
 '''
 =============
 Завершение
@@ -139,3 +158,7 @@ for i in range(1, len(frame_paths)):
 
 out_video.release()
 cv2.destroyAllWindows()
+
+if LOG_TIME:
+    print(f"total: {sum_time: .4f} ms")
+    print(f"avg: {sum_time / len(frame_paths): .4f} ms")
